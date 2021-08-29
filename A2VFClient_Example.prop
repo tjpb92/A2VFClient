@@ -1,0 +1,65 @@
+# Properties for production environnement
+prod.ifxserver.name=Ifx prod
+prod.ifxserver.ip=1.2.3.4
+prod.ifxserver.port=1234
+prod.ifxserver.dbname=xxx
+prod.ifxserver.login=xxx
+prod.ifxserver.passwd=xxx
+prod.ifxserver.informixserver=xxx
+prod.ifxserver.drivername=Informix
+prod.ifxserver.driverclass=com.informix.jdbc.IfxDriver
+prod.ifxserver.nb.thread=8
+
+prod.mgoserver.name=Mongo Prod
+prod.mgoserver.ip=2.3.4.5
+prod.mgoserver.port=2345
+prod.mgoserver.dbname=xxx-prod
+prod.mgoserver.login=login
+prod.mgoserver.passwd=passwd
+prod.mgoserver.informixserver=na
+prod.mgoserver.drivername=MongoDB
+prod.mgoserver.driverclass=MongoDB
+prod.mgoserver.nb.thread=8
+
+prod.apiserver.name=Vinci Facilities - Production
+prod.apiserver.baseURL=https://xxxx
+prod.apiserver.authURL=https://xxxx
+prod.apiserver.login=login
+prod.apiserver.passwd=password
+
+# Properties for pre-production environnement
+pre-prod.ifxserver.name=Ifx preprod
+pre-prod.ifxserver.ip=3.4.5.6
+pre-prod.ifxserver.port=3456
+pre-prod.ifxserver.dbname=xxx
+pre-prod.ifxserver.login=xxx
+pre-prod.ifxserver.passwd=xxx
+pre-prod.ifxserver.informixserver=xxx
+pre-prod.ifxserver.drivername=Informix
+pre-prod.ifxserver.driverclass=com.informix.jdbc.IfxDriver
+pre-prod.ifxserver.nb.thread=8
+
+pre-prod.mgoserver.name=Mongo Preprod
+pre-prod.mgoserver.ip=4.5.6.7
+pre-prod.mgoserver.port=4567
+pre-prod.mgoserver.dbname=xxx-preprod
+pre-prod.mgoserver.login=login
+pre-prod.mgoserver.passwd=passwd
+pre-prod.mgoserver.informixserver=na
+pre-prod.mgoserver.drivername=MongoDB
+pre-prod.mgoserver.driverclass=MongoDB
+pre-prod.mgoserver.nb.thread=8
+
+pre-prod.apiserver.name=Vinci Facilities - Sandbox
+pre-prod.apiserver.baseURL=https://xxxx
+pre-prod.apiserver.authURL=https://xxxx
+pre-prod.apiserver.login=login
+pre-prod.apiserver.passwd=passwd
+
+# Mailserver for alerts
+mailServer.name=name
+mailServer.ipAddress=5.6.7.8
+mailServer.fromAddress=from@mail.com
+mailServer.toAddress=to@mail.com
+mailServer.user=user
+mailServer.password=password
