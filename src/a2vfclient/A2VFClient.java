@@ -5,13 +5,15 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import utils.ApplicationProperties;
+import utils.DBServer;
+import utils.DBServerException;
 import utils.GetArgsException;
 
 /**
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.2
+ * @version 1.0.3
  */
 public class A2VFClient {
 
@@ -19,7 +21,6 @@ public class A2VFClient {
      * Common Jackson object mapper
      */
 //    private static final ObjectMapper objectMapper = new ObjectMapper();
-    
     /**
      * apiServerType : prod pour le serveur de production, pre-prod pour le
      * serveur de pré-production. Valeur par défaut : pre-prod.
@@ -45,7 +46,8 @@ public class A2VFClient {
     /**
      * Serveur de mail pour les notifications
      */
-//    private MailServer mailServer;
+    private MailServer mailServer;
+
     /**
      * debugMode : fonctionnement du programme en mode debug (true/false).
      * Valeur par défaut : false.
@@ -77,15 +79,17 @@ public class A2VFClient {
      * @throws a2vfclient.MailServer.MailServerException en cas de problème sur
      * l'envoi des mails.
      */
-    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException {
+    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException, DBServerException, MailServer.MailServerException {
         ApplicationProperties applicationProperties;
-        
+        DBServer ifxServer;
+        DBServer mgoServer;
+
         System.out.println("Création d'une instance de A2VFClient ...");
-        
+
         System.out.println("Analyse des arguments de la ligne de commande ...");
         this.getArgs(args);
         System.out.println("Argument(s) en ligne de commande lus().");
-    
+
         System.out.println("Lecture des paramètres d'exécution ...");
         applicationProperties = new ApplicationProperties("A2VFClient.prop");
         System.out.println("Paramètres d'exécution lus.");
@@ -96,7 +100,32 @@ public class A2VFClient {
         if (debugMode) {
             System.out.println(this.apiRest);
         }
-}
+
+        System.out.println("Lecture des paramètres du serveur Informix ...");
+        ifxServer = new DBServer(ifxDbServerType, "ifxserver", applicationProperties);
+        System.out.println("Paramètres du serveur Informix lus.");
+        if (debugMode) {
+            System.out.println(ifxServer);
+        }
+
+        System.out.println("Lecture des paramètres du serveur Mongo ...");
+        mgoServer = new DBServer(mgoDbServerType, "mgoserver", applicationProperties);
+        System.out.println("Paramètres du serveur Mongo lus.");
+        if (debugMode) {
+            System.out.println(mgoServer);
+        }
+
+        System.out.println("Lecture des paramètres du serveur de mail ...");
+        mailServer = new MailServer(applicationProperties);
+        System.out.println("Paramètres du serveur Mongo lus.");
+        if (debugMode) {
+            System.out.println(mailServer);
+        }
+
+        if (debugMode) {
+            System.out.println(this.toString());
+        }
+    }
 
     /**
      * Récupère les paramètres en ligne de commande
@@ -217,7 +246,7 @@ public class A2VFClient {
         System.out.println("Lancement de A2VFclient ...");
         try {
             a2VFClient = new A2VFClient(args);
-        } catch (GetArgsException | IOException | APIREST.APIServerException exception) {
+        } catch (GetArgsException | IOException | APIREST.APIServerException | DBServerException | MailServer.MailServerException exception) {
             Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
         System.out.println("Fin de A2VFclient.");
@@ -262,9 +291,9 @@ public class A2VFClient {
     }
 
     /**
-     * Retourne le contenu de A2ITClient
+     * Retourne le contenu de A2VFClient
      *
-     * @return retourne le contenu de A2ITClient
+     * @return retourne le contenu de A2VFClient
      */
     @Override
     public String toString() {
@@ -272,7 +301,7 @@ public class A2VFClient {
                 + "apiServerType:" + apiServerType
                 + ", ifxDbServerType:" + ifxDbServerType
                 + ", mgoDbServerType:" + mgoDbServerType
-                //                + ", mailServer:" + mailServer
+                + ", mailServer:" + mailServer
                 + ", debugMode:" + debugMode
                 + ", testMode:" + testMode
                 + "}";

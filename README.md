@@ -30,7 +30,7 @@ Ce fichier permet de spécifier les paramètres d'accès aux différentes bases 
 
 A adapter selon les implémentations locales.
 
-Ce fichier est nommé : *A2VFCLient.prop*.
+Ce fichier est nommé : *A2VFClient.prop*.
 
 Le fichier *A2VFClient_Example.prop* est fourni à titre d'exemple.
 
