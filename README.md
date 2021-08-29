@@ -32,7 +32,7 @@ A adapter selon les implémentations locales.
 
 Ce fichier est nommé : *A2VFCLient.prop*.
 
-Le fichier *A2VFCLient_Example.prop* est fourni à titre d'exemple.
+Le fichier *A2VFClient_Example.prop* est fourni à titre d'exemple.
 
 ## Références:
 
