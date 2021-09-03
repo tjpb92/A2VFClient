@@ -2,33 +2,44 @@ package a2vfclient;
 
 import bdd.Fa2vf;
 import bdd.Fa2vfDAO;
+import bkgpi2a.EventType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ticketEvents.TicketOpened;
 import utils.ApplicationProperties;
 import utils.DBManager;
 import utils.DBServer;
 import utils.DBServerException;
 import utils.GetArgsException;
+import utils.HttpsClientException;
+import utils.Md5;
+import utils.UnknownEventTypeException;
 
 /**
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.4
+ * @version 1.0.5
  */
 public class A2VFClient {
 
     /**
      * Common Jackson object mapper
      */
-//    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    
     /**
      * apiServerType : prod pour le serveur de production, pre-prod pour le
      * serveur de pré-production. Valeur par défaut : pre-prod.
@@ -69,6 +80,11 @@ public class A2VFClient {
     private static boolean testMode = false;
 
     /**
+     * EvenType lookup list by Uid
+     */
+    private Map<Integer, EventType> eventTypeByUid;
+
+    /**
      * Constructeur de la classe A2VFClient
      *
      * @param args arguments en ligne de commande
@@ -95,6 +111,12 @@ public class A2VFClient {
         Connection informixConnection;
 
         System.out.println("Création d'une instance de A2VFClient ...");
+
+        System.out.println("Building EventType reverse Uid lookup list ...");
+        eventTypeByUid = new HashMap<>();
+        for (EventType eventType : EventType.values()) {
+            eventTypeByUid.put(eventType.getUid(), eventType);
+        }
 
         System.out.println("Analyse des arguments de la ligne de commande ...");
         this.getArgs(args);
@@ -161,7 +183,7 @@ public class A2VFClient {
         TimeZone timeZone = TimeZone.getTimeZone("Europe/Paris");
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
         dateFormat.setTimeZone(timeZone);
-//        Event event;
+        Event event;
 //        OpenTicket openTicket;
         int retcode;
 //        MongoCollection<Document> collection;
@@ -199,19 +221,15 @@ public class A2VFClient {
 
                 System.out.println("Fa2vf(" + i + ")=" + fa2vf);
 
-// Simulate fake treatment, one error each 8 records
-                if ((i % 8) != 0) {
-                    retcode = 1;
-                }
+                try {
+                    json = toJson(fa2vf, dateFormat);
+                    System.out.println("  json:" + json);
+                    event = objectMapper.readValue(json, Event.class);
+                    System.out.println("  " + event.getClass().getName() + ", " + event);
 
-//                try {
-//                    json = toJson(fa2vf, dateFormat);
-//                    System.out.println("  json:" + json);
-//                    event = objectMapper.readValue(json.toString(), Event.class);
-//                    System.out.println("  " + event.getClass().getName() + ", " + event);
-//
-//                    if (event instanceof TicketOpened) {
-//                        retcode = processTicketOpened(mongoDatabase, (TicketOpened) event, httpsClient);
+                    if (event instanceof TicketOpened) {
+                        retcode = processTicketOpened((TicketOpened) event);
+                    }
 //                    } else if (event instanceof InterventionStarted) {
 //                        retcode = processInterventionStarted(mongoDatabase, (InterventionStarted) event, httpsClient);
 //                    } else if (event instanceof InterventionFinished) {
@@ -227,15 +245,15 @@ public class A2VFClient {
 //                    } else if (event instanceof TicketUpdated) {
 //                        retcode = processTicketUpdated(mongoDatabase, (TicketUpdated) event, httpsClient);
 //                    }
-//                } catch (IOException exception) {
-//                    retcode = -1;
-//                    System.out.println("  Cannot convert Json to Event, record rejected " + exception);
-////                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-//                } catch (UnknownEventTypeException exception) {
-//                    retcode = -1;
-//                    System.out.println(exception);
-////                    Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, ex);
-//                }
+                } catch (IOException exception) {
+                    retcode = -1;
+                    System.out.println("  Cannot convert Json to Event, record rejected " + exception);
+//                        Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
+                } catch (UnknownEventTypeException exception) {
+                    retcode = -1;
+                    System.out.println(exception);
+//                    Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 fa2vf.setA12status(retcode);
                 if (retcode != 1) {
                     fa2vf.setA12nberr(1);
@@ -251,6 +269,57 @@ public class A2VFClient {
         } catch (SQLException exception) {
             Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
+    }
+    /**
+     * Traitement de l'ouverture d'un ticket
+     *
+     * @param mongoDatabase connexion à la base de données Mongodb
+     * @param ticketOpened événement d'ouverture d'un ticket
+     * @return résultat de l'opération 1=succès, 0=abandon, -1=erreur
+     */
+    private int processTicketOpened(TicketOpened ticketOpened) {
+        TicketInfos ticketInfos;
+        String clientUuid;
+//        OpenTicket openTicket;
+//        CallPurpose callPurpose;
+//        Contract2 currentContract;
+        int retcode;
+
+        retcode = -1;
+        ticketInfos = ticketOpened.getTicketInfos();
+        clientUuid = ticketInfos.getCompanyUid();
+//        if (isClientAuthorizedToUseAPI(mongoDatabase, clientUuid)) {
+//            if (isAssetAuthorizedToUseAPI(mongoDatabase, clientUuid, ticketInfos.getAssetReference())) {
+//                callPurpose = convertCallPurpose(mongoDatabase, clientUuid, ticketInfos.getCallPurposeUid());
+//                if (callPurpose != null) {
+//                    if (callPurpose.isAuthorizedToUseAPI()) {
+//                        System.out.println("  Ticket can be sent to Intent Technologies");
+//                        currentContract = getCurrentContract(mongoDatabase, clientUuid, ticketInfos.getAssetReference(), ticketInfos.getCallPurposeUid());
+//                        openTicket = new OpenTicket(ticketOpened, callPurpose, currentContract);
+//                        System.out.println("  " + openTicket);
+//                        try {
+//                            objectMapper.writeValue(new File("testOpenTicket_1.json"), openTicket);
+//                            httpsClient.openTicket(openTicket, debugMode);
+////                            sendAlert("Ticket " + ticketInfos.getClaimNumber().getCallCenterClaimNumber() + " opened");
+//                            sendAlert(ticketOpened);
+//                            retcode = 1;
+//                        } catch (JsonProcessingException | HttpsClientException exception) {
+//                            //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+//                            System.out.println("  ERROR : fail to sent ticket to Intent Technologies");
+//                        } catch (IOException exception) {
+//                            System.out.println("  ERROR : Fail to write Json to file");
+//                            //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+//                        }
+//                    } else {
+//                        System.out.println("  ERROR : call purpose :" + callPurpose.getName() + " not authorized to use API");
+//                    }
+//                } else {
+//                    System.out.println("  ERROR : cannot find call purpose Uid:" + ticketInfos.getCallPurposeUid());
+//                }
+//            }
+//        }
+
+        return retcode;
     }
 
     /**
@@ -431,6 +500,41 @@ public class A2VFClient {
                 + ", debugMode:" + debugMode
                 + ", testMode:" + testMode
                 + "}";
+    }
+
+    /**
+     * Conversion des données venant de la base de données Informix au foramt
+     * Json
+     *
+     * @param fa2vf données à convertir
+     * @param dateFormat format de date
+     * @return données converties au format Json
+     * @throws UnknownEventTypeException exception envoyée si un type
+     * d'événément est inconnu
+     */
+    private String toJson(Fa2vf fa2vf, DateFormat dateFormat) throws UnknownEventTypeException {
+
+        StringBuffer json;
+        int evtType;
+        EventType eventType;
+
+        json = null;
+        evtType = fa2vf.getA12evttype();
+        eventType = eventTypeByUid.get(evtType);
+        if (eventType == null) {
+            throw new UnknownEventTypeException("Unknown EventType:" + evtType);
+        } else {
+            json = new StringBuffer("{");
+            json.append("\"processUid\":\"").append(Md5.encode("a11:" + String.valueOf(fa2vf.getA12num()))).append("\",");
+            json.append("\"aggregateUid\":\"").append(Md5.encode(fa2vf.getA12laguid())).append("\",");
+            json.append("\"eventType\":\"").append(eventType.getName()).append("\",");
+            json.append("\"sentDate\":\"").append(dateFormat.format(fa2vf.getA12credate())).append("\",");
+            json.append(fa2vf.getA12data());
+            json.append("}");
+        }
+
+        return json.toString();
+
     }
 
 }

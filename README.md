@@ -1,10 +1,10 @@
-# A2VFCLient
+# A2VFClient
 
 Connecteur Anstel / Vinci Facilities (lien montant).
 
 ## Utilisation:
 ```
-java A2VFClient[-ifxserver ifxdb] [-mgoserver mgodb] [-apiserver apiserver] [-d] [-t] 
+java A2VFClient [-ifxserver ifxdb] [-mgoserver mgodb] [-apiserver apiserver] [-d] [-t] 
 ```
 où :
 * ```-apiserver apiserver``` est la référence au serveur d'API distant, par défaut désigne le serveur de développement Voir fichier *A2VFClient.prop* (paramètre optionnel).
