@@ -1,10 +1,18 @@
 package a2vfclient;
 
+import bdd.Fa2vf;
+import bdd.Fa2vfDAO;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import utils.ApplicationProperties;
+import utils.DBManager;
 import utils.DBServer;
 import utils.DBServerException;
 import utils.GetArgsException;
@@ -13,7 +21,7 @@ import utils.GetArgsException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.3
+ * @version 1.0.4
  */
 public class A2VFClient {
 
@@ -79,10 +87,12 @@ public class A2VFClient {
      * @throws a2vfclient.MailServer.MailServerException en cas de problème sur
      * l'envoi des mails.
      */
-    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException, DBServerException, MailServer.MailServerException {
+    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException, DBServerException, MailServer.MailServerException, ClassNotFoundException, SQLException {
         ApplicationProperties applicationProperties;
         DBServer ifxServer;
         DBServer mgoServer;
+        DBManager informixDbManager;
+        Connection informixConnection;
 
         System.out.println("Création d'une instance de A2VFClient ...");
 
@@ -124,6 +134,122 @@ public class A2VFClient {
 
         if (debugMode) {
             System.out.println(this.toString());
+        }
+
+//        System.out.println("Ouverture de la connexion avec le server API" + apiRest.getName() + " ...");
+//        httpsClient = new HttpsClient(apiRest, debugMode);
+//        System.out.println("Connexion avec le server API ouverte.");
+        System.out.println("Ouverture de la connexion au serveur Informix : " + ifxServer.getName());
+        informixDbManager = new DBManager(ifxServer);
+
+        System.out.println("Connexion à la base de données : " + ifxServer.getDbName());
+        informixConnection = informixDbManager.getConnection();
+
+        System.out.println("Traitement des événements ...");
+        processEvents(informixConnection);
+    }
+
+    /**
+     * Traitement des événements
+     */
+    private void processEvents(Connection informixConnection) throws ClassNotFoundException {
+
+        Fa2vf fa2vf;
+        Fa2vfDAO fa2vfDAO;
+        int i;
+        String json;
+        TimeZone timeZone = TimeZone.getTimeZone("Europe/Paris");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        dateFormat.setTimeZone(timeZone);
+//        Event event;
+//        OpenTicket openTicket;
+        int retcode;
+//        MongoCollection<Document> collection;
+//        MongoCursor<Document> cursor;
+        int nbClient;
+//        BasicDBObject filter;
+//        UpdateResult updateResult;
+//        TicketOpened ticketOpened;
+//        Client client;
+//        TicketInfos ticketInfos;
+//        String clientUuid;
+//        String reference;
+//        Patrimony patrimony;
+//        CallPurpose callPurpose;
+//        String callPurposeUuid;
+//        TicketClosed ticketClosed;
+//        CloseTicket closeTicket;
+//        EventType eventType;
+        int evtType;
+
+//        collection = mongoDatabase.getCollection("clients");
+//        System.out.println(collection.count() + " client(s) dans la base MongoDb");
+        try {
+            fa2vfDAO = new Fa2vfDAO(informixConnection);
+            fa2vfDAO.setUpdatePreparedStatement();
+
+            fa2vfDAO.filterByStatus(0);
+            System.out.println("  SelectStatement=" + fa2vfDAO.getSelectStatement());
+            fa2vfDAO.setSelectPreparedStatement();
+            i = 0;
+
+            while ((fa2vf = fa2vfDAO.select()) != null) {
+                i++;
+                retcode = -1;
+
+                System.out.println("Fa2vf(" + i + ")=" + fa2vf);
+
+// Simulate fake treatment, one error each 8 records
+                if ((i % 8) != 0) {
+                    retcode = 1;
+                }
+
+//                try {
+//                    json = toJson(fa2vf, dateFormat);
+//                    System.out.println("  json:" + json);
+//                    event = objectMapper.readValue(json.toString(), Event.class);
+//                    System.out.println("  " + event.getClass().getName() + ", " + event);
+//
+//                    if (event instanceof TicketOpened) {
+//                        retcode = processTicketOpened(mongoDatabase, (TicketOpened) event, httpsClient);
+//                    } else if (event instanceof InterventionStarted) {
+//                        retcode = processInterventionStarted(mongoDatabase, (InterventionStarted) event, httpsClient);
+//                    } else if (event instanceof InterventionFinished) {
+//                        retcode = processInterventionFinished(mongoDatabase, (InterventionFinished) event, httpsClient);
+//                    } else if (event instanceof PermanentlyFixed) {
+//                        retcode = processPermanentlyFixed(mongoDatabase, (PermanentlyFixed) event, httpsClient);
+//                    } else if (event instanceof ClosedQuoteRequested) {
+//                        retcode = processClosedQuoteRequested(mongoDatabase, (ClosedQuoteRequested) event, httpsClient);
+//                    } else if (event instanceof TicketClosed) {
+//                        retcode = processTicketClosed(mongoDatabase, (TicketClosed) event, httpsClient);
+//                    } else if (event instanceof TicketCancelled) {
+//                        retcode = processTicketCancelled(mongoDatabase, (TicketCancelled) event, httpsClient);
+//                    } else if (event instanceof TicketUpdated) {
+//                        retcode = processTicketUpdated(mongoDatabase, (TicketUpdated) event, httpsClient);
+//                    }
+//                } catch (IOException exception) {
+//                    retcode = -1;
+//                    System.out.println("  Cannot convert Json to Event, record rejected " + exception);
+////                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+//                } catch (UnknownEventTypeException exception) {
+//                    retcode = -1;
+//                    System.out.println(exception);
+////                    Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+                fa2vf.setA12status(retcode);
+                if (retcode != 1) {
+                    fa2vf.setA12nberr(1);
+                }
+
+                fa2vf.setA12update(new Timestamp(new java.util.Date().getTime()));
+                fa2vfDAO.update(fa2vf);
+//                System.out.println("Rangée(s) affectée(s)=" + fa2vfDAO.getNbAffectedRow());
+            }
+            fa2vfDAO.closeUpdatePreparedStatement();
+            fa2vfDAO.closeSelectPreparedStatement();
+
+        } catch (SQLException exception) {
+            Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
     }
 
@@ -246,7 +372,7 @@ public class A2VFClient {
         System.out.println("Lancement de A2VFclient ...");
         try {
             a2VFClient = new A2VFClient(args);
-        } catch (GetArgsException | IOException | APIREST.APIServerException | DBServerException | MailServer.MailServerException exception) {
+        } catch (GetArgsException | IOException | APIREST.APIServerException | DBServerException | MailServer.MailServerException | ClassNotFoundException | SQLException exception) {
             Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
         System.out.println("Fin de A2VFclient.");
