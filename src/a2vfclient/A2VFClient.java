@@ -279,7 +279,7 @@ public class A2VFClient {
      */
     private int processTicketOpened(TicketOpened ticketOpened) {
         TicketInfos ticketInfos;
-        String clientUuid;
+//        String clientUuid;
 //        OpenTicket openTicket;
 //        CallPurpose callPurpose;
 //        Contract2 currentContract;
@@ -287,7 +287,7 @@ public class A2VFClient {
 
         retcode = -1;
         ticketInfos = ticketOpened.getTicketInfos();
-        clientUuid = ticketInfos.getCompanyUid();
+//        clientUuid = ticketInfos.getCompanyUid();
 //        if (isClientAuthorizedToUseAPI(mongoDatabase, clientUuid)) {
 //            if (isAssetAuthorizedToUseAPI(mongoDatabase, clientUuid, ticketInfos.getAssetReference())) {
 //                callPurpose = convertCallPurpose(mongoDatabase, clientUuid, ticketInfos.getCallPurposeUid());

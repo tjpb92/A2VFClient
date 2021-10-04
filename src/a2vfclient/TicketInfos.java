@@ -6,14 +6,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Classe définissant les informations d'un ticket
  *
  * @author Thierry Baribaud
- * @version 1.0.5
+ * @version 1.0.6
  */
 public class TicketInfos {
-
-    /**
-     * Référence au client
-     */
-    private String companyUid;
 
     /**
      * Nom de l'entreprise Vinci Facilities
@@ -76,59 +71,59 @@ public class TicketInfos {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String ticketPriority;
-    
+
     /**
      * Référence externe au ticket
      */
     private String ticketExternalId;
-    
+
     /**
      * Identifiant du site
      */
     private String siteId;
-    
+
     /**
      * Type de ticket
      */
     private String ticketType;
-    
+
     /**
      * Contact supplémentaire
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String additionalContact;
-    
+
     /**
      * Urgence des travaux
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String workImpactUrgency;
-    
+
     /**
      * Impact sur l'environnement
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String workEnvironmentImpactUrgency;
-    
+
     /**
      * Date de création du ticket
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String ticketCreationDate;
-    
+
     /**
      * Indicateur d'astreinte
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private int dutyFlag;
-    
+
     /**
      * Etat du ticket
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String ticketBusinessStatus;
-    
- /**
+
+    /**
      * Constructeur de la classe TicketInfos
      */
     public TicketInfos() {
@@ -138,20 +133,6 @@ public class TicketInfos {
         ticketType = "1";
         dutyFlag = 1;
         ticketBusinessStatus = "10101";
-    }
-
-    /**
-     * @return retourne la référence au client
-     */
-    public String getCompanyUid() {
-        return companyUid;
-    }
-
-    /**
-     * @param companyUid définit la référence au client
-     */
-    public void setCompanyUid(String companyUid) {
-        this.companyUid = companyUid;
     }
 
     /**
@@ -440,7 +421,6 @@ public class TicketInfos {
     @Override
     public String toString() {
         return "TicketInfo:{"
-                + "companyUid:" + getCompanyUid()
                 + ", conpanyName:" + getCompanyName()
                 + ", ticketOriginCode:" + getTicketOriginCode()
                 + ", contactExternalId:" + getContactExternalId()
