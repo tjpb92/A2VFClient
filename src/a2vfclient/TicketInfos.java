@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Classe définissant les informations d'un ticket
  *
  * @author Thierry Baribaud
- * @version 1.0.6
+ * @version 1.0.7
  */
 public class TicketInfos {
 
@@ -421,7 +421,7 @@ public class TicketInfos {
     @Override
     public String toString() {
         return "TicketInfo:{"
-                + ", conpanyName:" + getCompanyName()
+                + "conpanyName:" + getCompanyName()
                 + ", ticketOriginCode:" + getTicketOriginCode()
                 + ", contactExternalId:" + getContactExternalId()
                 + ", contactEmailAddress:" + getContactEmailAddress()

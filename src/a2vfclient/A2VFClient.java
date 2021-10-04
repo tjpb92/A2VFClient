@@ -31,7 +31,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.5
+ * @version 1.0.7
  */
 public class A2VFClient {
 
@@ -95,7 +95,7 @@ public class A2VFClient {
      * ligne de commande
      * @throws a2vfclient.APIREST.APIServerException en cas de problème avec les
      * paramètres du serveur API
-     * @throws a2vfclient.HttpsClientException en cas de problème avec la
+     * @throws utils.HttpsClientException en cas de problème avec la
      * connexion Https.
      * @throws java.lang.ClassNotFoundException en cas de problème avec une
      * classe inconnue
@@ -103,12 +103,13 @@ public class A2VFClient {
      * @throws a2vfclient.MailServer.MailServerException en cas de problème sur
      * l'envoi des mails.
      */
-    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException, DBServerException, MailServer.MailServerException, ClassNotFoundException, SQLException {
+    public A2VFClient(String[] args) throws GetArgsException, IOException, APIREST.APIServerException, DBServerException, MailServer.MailServerException, ClassNotFoundException, SQLException, HttpsClientException {
         ApplicationProperties applicationProperties;
         DBServer ifxServer;
         DBServer mgoServer;
         DBManager informixDbManager;
         Connection informixConnection;
+        HttpsClient httpsClient;
 
         System.out.println("Création d'une instance de A2VFClient ...");
 
@@ -158,9 +159,10 @@ public class A2VFClient {
             System.out.println(this.toString());
         }
 
-//        System.out.println("Ouverture de la connexion avec le server API" + apiRest.getName() + " ...");
-//        httpsClient = new HttpsClient(apiRest, debugMode);
-//        System.out.println("Connexion avec le server API ouverte.");
+        System.out.println("Ouverture de la connexion avec le server API" + apiRest.getName() + " ...");
+        httpsClient = new HttpsClient(apiRest, debugMode);
+        System.out.println("Connexion avec le server API ouverte.");
+        
         System.out.println("Ouverture de la connexion au serveur Informix : " + ifxServer.getName());
         informixDbManager = new DBManager(ifxServer);
 
@@ -168,13 +170,13 @@ public class A2VFClient {
         informixConnection = informixDbManager.getConnection();
 
         System.out.println("Traitement des événements ...");
-        processEvents(informixConnection);
+        processEvents(httpsClient, informixConnection);
     }
 
     /**
      * Traitement des événements
      */
-    private void processEvents(Connection informixConnection) throws ClassNotFoundException {
+    private void processEvents(HttpsClient httpsClient, Connection informixConnection) throws ClassNotFoundException {
 
         Fa2vf fa2vf;
         Fa2vfDAO fa2vfDAO;
@@ -228,7 +230,7 @@ public class A2VFClient {
                     System.out.println("  " + event.getClass().getName() + ", " + event);
 
                     if (event instanceof TicketOpened) {
-                        retcode = processTicketOpened((TicketOpened) event);
+                        retcode = processTicketOpened((TicketOpened) event, httpsClient);
                     }
 //                    } else if (event instanceof InterventionStarted) {
 //                        retcode = processInterventionStarted(mongoDatabase, (InterventionStarted) event, httpsClient);
@@ -277,7 +279,7 @@ public class A2VFClient {
      * @param ticketOpened événement d'ouverture d'un ticket
      * @return résultat de l'opération 1=succès, 0=abandon, -1=erreur
      */
-    private int processTicketOpened(TicketOpened ticketOpened) {
+    private int processTicketOpened(TicketOpened ticketOpened, HttpsClient httpsClient) {
         TicketInfos ticketInfos;
 //        String clientUuid;
 //        OpenTicket openTicket;
@@ -297,19 +299,19 @@ public class A2VFClient {
 //                        currentContract = getCurrentContract(mongoDatabase, clientUuid, ticketInfos.getAssetReference(), ticketInfos.getCallPurposeUid());
 //                        openTicket = new OpenTicket(ticketOpened, callPurpose, currentContract);
 //                        System.out.println("  " + openTicket);
-//                        try {
-//                            objectMapper.writeValue(new File("testOpenTicket_1.json"), openTicket);
-//                            httpsClient.openTicket(openTicket, debugMode);
-////                            sendAlert("Ticket " + ticketInfos.getClaimNumber().getCallCenterClaimNumber() + " opened");
+                        try {
+                            objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
+                            httpsClient.openTicket(ticketInfos, debugMode);
+//                            sendAlert("Ticket " + ticketInfos.getClaimNumber().getCallCenterClaimNumber() + " opened");
 //                            sendAlert(ticketOpened);
-//                            retcode = 1;
-//                        } catch (JsonProcessingException | HttpsClientException exception) {
-//                            //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-//                            System.out.println("  ERROR : fail to sent ticket to Intent Technologies");
-//                        } catch (IOException exception) {
-//                            System.out.println("  ERROR : Fail to write Json to file");
-//                            //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-//                        }
+                            retcode = 1;
+                        } catch (JsonProcessingException | HttpsClientException exception) {
+                            //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+                            System.out.println("  ERROR : fail to sent ticket to Intent Technologies");
+                        } catch (IOException exception) {
+                            System.out.println("  ERROR : Fail to write Json to file");
+                            //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+                        }
 //                    } else {
 //                        System.out.println("  ERROR : call purpose :" + callPurpose.getName() + " not authorized to use API");
 //                    }
@@ -441,7 +443,7 @@ public class A2VFClient {
         System.out.println("Lancement de A2VFclient ...");
         try {
             a2VFClient = new A2VFClient(args);
-        } catch (GetArgsException | IOException | APIREST.APIServerException | DBServerException | MailServer.MailServerException | ClassNotFoundException | SQLException exception) {
+        } catch (GetArgsException | IOException | APIREST.APIServerException | DBServerException | MailServer.MailServerException | ClassNotFoundException | SQLException | HttpsClientException exception) {
             Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
         System.out.println("Fin de A2VFclient.");
