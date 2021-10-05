@@ -15,7 +15,7 @@ import utils.HttpsClientException;
  * Classe décrivant un client se connectant en HTTPS à un serveur
  *
  * @author Thierry Baribaud
- * @version 1.0.7
+ * @version 1.0.8
  */
 public class HttpsClient extends OkHttpClient {
 
@@ -42,50 +42,6 @@ public class HttpsClient extends OkHttpClient {
         super();
         this.apiRest = apiRest;
 
-//        StringBuffer mediaTypeParams;
-//        MediaType mediaType;
-//        String json;
-//        int code;
-//        String message;
-
-//        mediaType = MediaType.parse("application/x-www-form-urlencoded");
-//        mediaTypeParams = new StringBuffer("grant_type=client_credentials&client_id=");
-//        mediaTypeParams.append(this.apiRest.getLogin());
-//        mediaTypeParams.append("&client_secret=");
-//        mediaTypeParams.append(this.apiRest.getPassword());
-//        if (debugMode) {
-//            System.out.println("mediaTypeParams:" + mediaTypeParams.toString());
-//        }
-//        RequestBody body = RequestBody.create(mediaType, mediaTypeParams.toString());
-//        Request request = new Request.Builder()
-//                //                .url("https://accountsandbox.hubintent.com/oauth/token")
-//                .url(apiRest.getAuthUrl())
-//                .post(body)
-//                .addHeader("content-type", "application/x-www-form-urlencoded")
-//                .addHeader("cache-control", "no-cache")
-//                .build();
-//
-//        Response response = this.newCall(request).execute();
-////            System.out.println("response:" + response);
-//        code = response.code();
-//        message = response.message();
-//
-//        if (debugMode) {
-//            System.out.println("response.code():" + code);
-//            System.out.println("response.message():" + message);
-//        }
-//
-//        if (code == 200) {
-//            json = response.body().string();
-//            System.out.println("response.body():" + json);
-////            System.out.println("response.headers():" + response.headers());
-//            if (json != null) {
-//                token = objectMapper.readValue(json, Token.class);
-//                System.out.println(token);
-//            }
-//        } else {
-//            throw new HttpsClientException(code + " " + message);
-//        }
     }
 
     /**
@@ -105,7 +61,7 @@ public class HttpsClient extends OkHttpClient {
         String message;
         StringBuffer mediaTypeParams;
 
-        url = this.apiRest.getBaseUrl() + "/ticket";
+        url = this.apiRest.getBaseUrl() + "/tickets";
         if (debugMode) {
             System.out.println("  url:" + url);
         }
@@ -134,20 +90,20 @@ public class HttpsClient extends OkHttpClient {
             System.out.println("  request.headers():" + request.headers());
         }
         
-//        Response response = this.newCall(request).execute();
-//        code = response.code();
-//        message = response.message();
+        Response response = this.newCall(request).execute();
+        code = response.code();
+        message = response.message();
 
-//        if (debugMode) {
-//            System.out.println("  response.code():" + code);
-//            System.out.println("  response.message():" + message);
-//        }
-//
-//        if (code == 204) {
-//            json = response.body().string();
-//            System.out.println("    response.body():" + json);
+        if (debugMode) {
+            System.out.println("  response.code():" + code);
+            System.out.println("  response.message():" + message);
+        }
+
+//        if (code == 200) {
+            json = response.body().string();
+            System.out.println("    response.body():" + json);
 //        } else {
-//            throw new HttpsClientException(code + " " + message);
+            throw new HttpsClientException(code + " " + message);
 //        }
 
     }

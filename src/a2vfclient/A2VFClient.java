@@ -31,7 +31,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.7
+ * @version 1.0.8
  */
 public class A2VFClient {
 
@@ -39,7 +39,7 @@ public class A2VFClient {
      * Common Jackson object mapper
      */
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     /**
      * apiServerType : prod pour le serveur de production, pre-prod pour le
      * serveur de pré-production. Valeur par défaut : pre-prod.
@@ -95,8 +95,8 @@ public class A2VFClient {
      * ligne de commande
      * @throws a2vfclient.APIREST.APIServerException en cas de problème avec les
      * paramètres du serveur API
-     * @throws utils.HttpsClientException en cas de problème avec la
-     * connexion Https.
+     * @throws utils.HttpsClientException en cas de problème avec la connexion
+     * Https.
      * @throws java.lang.ClassNotFoundException en cas de problème avec une
      * classe inconnue
      * @throws java.sql.SQLException en cas d'erreur d'entrée/sortie.
@@ -162,7 +162,7 @@ public class A2VFClient {
         System.out.println("Ouverture de la connexion avec le server API" + apiRest.getName() + " ...");
         httpsClient = new HttpsClient(apiRest, debugMode);
         System.out.println("Connexion avec le server API ouverte.");
-        
+
         System.out.println("Ouverture de la connexion au serveur Informix : " + ifxServer.getName());
         informixDbManager = new DBManager(ifxServer);
 
@@ -186,28 +186,10 @@ public class A2VFClient {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
         dateFormat.setTimeZone(timeZone);
         Event event;
-//        OpenTicket openTicket;
         int retcode;
-//        MongoCollection<Document> collection;
-//        MongoCursor<Document> cursor;
         int nbClient;
-//        BasicDBObject filter;
-//        UpdateResult updateResult;
-//        TicketOpened ticketOpened;
-//        Client client;
-//        TicketInfos ticketInfos;
-//        String clientUuid;
-//        String reference;
-//        Patrimony patrimony;
-//        CallPurpose callPurpose;
-//        String callPurposeUuid;
-//        TicketClosed ticketClosed;
-//        CloseTicket closeTicket;
-//        EventType eventType;
         int evtType;
 
-//        collection = mongoDatabase.getCollection("clients");
-//        System.out.println(collection.count() + " client(s) dans la base MongoDb");
         try {
             fa2vfDAO = new Fa2vfDAO(informixConnection);
             fa2vfDAO.setUpdatePreparedStatement();
@@ -234,18 +216,6 @@ public class A2VFClient {
                     }
 //                    } else if (event instanceof InterventionStarted) {
 //                        retcode = processInterventionStarted(mongoDatabase, (InterventionStarted) event, httpsClient);
-//                    } else if (event instanceof InterventionFinished) {
-//                        retcode = processInterventionFinished(mongoDatabase, (InterventionFinished) event, httpsClient);
-//                    } else if (event instanceof PermanentlyFixed) {
-//                        retcode = processPermanentlyFixed(mongoDatabase, (PermanentlyFixed) event, httpsClient);
-//                    } else if (event instanceof ClosedQuoteRequested) {
-//                        retcode = processClosedQuoteRequested(mongoDatabase, (ClosedQuoteRequested) event, httpsClient);
-//                    } else if (event instanceof TicketClosed) {
-//                        retcode = processTicketClosed(mongoDatabase, (TicketClosed) event, httpsClient);
-//                    } else if (event instanceof TicketCancelled) {
-//                        retcode = processTicketCancelled(mongoDatabase, (TicketCancelled) event, httpsClient);
-//                    } else if (event instanceof TicketUpdated) {
-//                        retcode = processTicketUpdated(mongoDatabase, (TicketUpdated) event, httpsClient);
 //                    }
                 } catch (IOException exception) {
                     retcode = -1;
@@ -264,6 +234,11 @@ public class A2VFClient {
                 fa2vf.setA12update(new Timestamp(new java.util.Date().getTime()));
                 fa2vfDAO.update(fa2vf);
 //                System.out.println("Rangée(s) affectée(s)=" + fa2vfDAO.getNbAffectedRow());
+
+                if (i >= 1) {
+                    break;
+                }
+
             }
             fa2vfDAO.closeUpdatePreparedStatement();
             fa2vfDAO.closeSelectPreparedStatement();
@@ -272,6 +247,7 @@ public class A2VFClient {
             Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
         }
     }
+
     /**
      * Traitement de l'ouverture d'un ticket
      *
@@ -281,45 +257,23 @@ public class A2VFClient {
      */
     private int processTicketOpened(TicketOpened ticketOpened, HttpsClient httpsClient) {
         TicketInfos ticketInfos;
-//        String clientUuid;
-//        OpenTicket openTicket;
-//        CallPurpose callPurpose;
-//        Contract2 currentContract;
         int retcode;
 
         retcode = -1;
         ticketInfos = ticketOpened.getTicketInfos();
-//        clientUuid = ticketInfos.getCompanyUid();
-//        if (isClientAuthorizedToUseAPI(mongoDatabase, clientUuid)) {
-//            if (isAssetAuthorizedToUseAPI(mongoDatabase, clientUuid, ticketInfos.getAssetReference())) {
-//                callPurpose = convertCallPurpose(mongoDatabase, clientUuid, ticketInfos.getCallPurposeUid());
-//                if (callPurpose != null) {
-//                    if (callPurpose.isAuthorizedToUseAPI()) {
-//                        System.out.println("  Ticket can be sent to Intent Technologies");
-//                        currentContract = getCurrentContract(mongoDatabase, clientUuid, ticketInfos.getAssetReference(), ticketInfos.getCallPurposeUid());
-//                        openTicket = new OpenTicket(ticketOpened, callPurpose, currentContract);
-//                        System.out.println("  " + openTicket);
-                        try {
-                            objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
-                            httpsClient.openTicket(ticketInfos, debugMode);
+        try {
+            objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
+            httpsClient.openTicket(ticketInfos, debugMode);
 //                            sendAlert("Ticket " + ticketInfos.getClaimNumber().getCallCenterClaimNumber() + " opened");
 //                            sendAlert(ticketOpened);
-                            retcode = 1;
-                        } catch (JsonProcessingException | HttpsClientException exception) {
-                            //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-                            System.out.println("  ERROR : fail to sent ticket to Intent Technologies");
-                        } catch (IOException exception) {
-                            System.out.println("  ERROR : Fail to write Json to file");
-                            //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-                        }
-//                    } else {
-//                        System.out.println("  ERROR : call purpose :" + callPurpose.getName() + " not authorized to use API");
-//                    }
-//                } else {
-//                    System.out.println("  ERROR : cannot find call purpose Uid:" + ticketInfos.getCallPurposeUid());
-//                }
-//            }
-//        }
+            retcode = 1;
+        } catch (JsonProcessingException | HttpsClientException exception) {
+            //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+            System.out.println("  ERROR : fail to sent ticket to Looma");
+        } catch (IOException exception) {
+            System.out.println("  ERROR : Fail to write Json to file");
+            //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
+        }
 
         return retcode;
     }
