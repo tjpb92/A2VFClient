@@ -31,7 +31,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.8
+ * @version 1.0.9
  */
 public class A2VFClient {
 
@@ -271,7 +271,7 @@ public class A2VFClient {
             //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
             System.out.println("  ERROR : fail to sent ticket to Looma");
         } catch (IOException exception) {
-            System.out.println("  ERROR : Fail to write Json to file");
+            System.out.println("  ERROR : Fail to write Json to file " + exception);
             //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
         }
 

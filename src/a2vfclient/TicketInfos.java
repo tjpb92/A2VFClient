@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Classe définissant les informations d'un ticket
  *
  * @author Thierry Baribaud
- * @version 1.0.7
+ * @version 1.0.9
  */
 public class TicketInfos {
 
@@ -83,6 +83,11 @@ public class TicketInfos {
     private String siteId;
 
     /**
+     * Identifiant externe du site
+     */
+    private String siteExternalId;
+
+    /**
      * Type de ticket
      */
     private String ticketType;
@@ -115,7 +120,7 @@ public class TicketInfos {
      * Indicateur d'astreinte
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private int dutyFlag;
+    private boolean dutyFlag;
 
     /**
      * Etat du ticket
@@ -131,7 +136,7 @@ public class TicketInfos {
         problemTypeCode = "S-AUX";
         ticketPriority = "LOW";
         ticketType = "1";
-        dutyFlag = 1;
+        dutyFlag = true;
         ticketBusinessStatus = "10101";
     }
 
@@ -318,6 +323,20 @@ public class TicketInfos {
     }
 
     /**
+     * @return l'identifiant externe du site
+     */
+    public String getSiteExternalId() {
+        return siteExternalId;
+    }
+
+    /**
+     * @param siteExternalId définit l'identifiant externe du site
+     */
+    public void setSiteExternalId(String siteExternalId) {
+        this.siteExternalId = siteExternalId;
+    }
+
+    /**
      * @return le type de ticket
      */
     public String getTicketType() {
@@ -390,14 +409,14 @@ public class TicketInfos {
     /**
      * @return l'indicateur d'astreinte
      */
-    public int getDutyFlag() {
+    public boolean getDutyFlag() {
         return dutyFlag;
     }
 
     /**
      * @param dutyFlag définit l'indicateur d'astreinte
      */
-    public void setDutyFlag(int dutyFlag) {
+    public void setDutyFlag(boolean dutyFlag) {
         this.dutyFlag = dutyFlag;
     }
 
@@ -434,6 +453,7 @@ public class TicketInfos {
                 + ", ticketPriority:" + getTicketPriority()
                 + ", ticketExternalId:" + getTicketExternalId()
                 + ", siteId:" + getSiteId()
+                + ", siteExternalId:" + getSiteExternalId()
                 + ", ticketType:" + getTicketType()
                 + ", additionalContact:" + getAdditionalContact()
                 + ", workImpactUrgency:" + getWorkImpactUrgency()
