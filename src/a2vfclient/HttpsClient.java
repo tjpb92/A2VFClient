@@ -15,7 +15,7 @@ import utils.HttpsClientException;
  * Classe décrivant un client se connectant en HTTPS à un serveur
  *
  * @author Thierry Baribaud
- * @version 1.0.9
+ * @version 1.0.10
  */
 public class HttpsClient extends OkHttpClient {
 
@@ -93,16 +93,15 @@ public class HttpsClient extends OkHttpClient {
         Response response = this.newCall(request).execute();
         code = response.code();
         message = response.message();
+        json = response.body().string();
 
         if (debugMode) {
             System.out.println("  response.code():" + code);
             System.out.println("  response.message():" + message);
+            System.out.println("  response.body():" + json);
         }
 
-        if (code == 200) {
-            json = response.body().string();
-            System.out.println("    response.body():" + json);
-        } else {
+        if (code != 200) {
             throw new HttpsClientException(code + " " + message);
         }
 
