@@ -12,11 +12,19 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import ticketEvents.TicketOpened;
 import utils.ApplicationProperties;
 import utils.DBManager;
@@ -31,7 +39,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.9
+ * @version 1.0.11
  */
 public class A2VFClient {
 
@@ -264,12 +272,12 @@ public class A2VFClient {
         try {
             objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
             httpsClient.openTicket(ticketInfos, debugMode);
-//                            sendAlert("Ticket " + ticketInfos.getClaimNumber().getCallCenterClaimNumber() + " opened");
-//                            sendAlert(ticketOpened);
+            sendAlert(ticketOpened);
             retcode = 1;
         } catch (JsonProcessingException | HttpsClientException exception) {
             //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-            System.out.println("  ERROR : fail to sent ticket to Looma");
+            System.out.println("  ERROR : fail to sent ticket to Looma " + exception);
+            sendAlert("LOOMA : error with ticket " + ticketInfos.getTicketExternalId(), exception.toString());
         } catch (IOException exception) {
             System.out.println("  ERROR : Fail to write Json to file " + exception);
             //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
@@ -490,6 +498,71 @@ public class A2VFClient {
         }
 
         return json.toString();
+
+    }
+
+    /**
+     * Envoie une alerte simple par mail
+     */
+    private void sendAlert(String alertMessage) {
+        sendAlert(alertMessage, alertMessage);
+    }
+
+    /**
+     * Envoie une alerte par mail pour un ticket ouvert
+     */
+    private void sendAlert(TicketOpened ticketOpened) {
+        String alertSubject;
+        StringBuffer alertMessage;
+        TicketInfos ticketInfos = ticketOpened.getTicketInfos();
+        String siteId;
+        String ticketSubject;
+        String ticketRemarks;
+
+        alertSubject = "LOOMA : Ticket " + ticketInfos.getTicketExternalId() + " opened";
+
+        alertMessage = new StringBuffer(alertSubject);
+        if ((ticketSubject = ticketInfos.getTicketSubject()) != null) {
+            alertMessage.append("\nObjet : ").append(ticketSubject);
+        }
+        if ((siteId = ticketInfos.getSiteId()) != null) {
+            alertMessage.append("\nSite : ").append(siteId);
+        }
+        if ((ticketRemarks = ticketInfos.getTicketRemarks()) != null) {
+            alertMessage.append("\nMotif : ").append("\n").append(ticketRemarks);
+        }
+        
+        if (alertMessage.length() == 0) {
+            alertMessage.append("\nATTENTION : \n\nchamps ticketSubject, siteId, ticketRemarks vides !");
+        }
+
+        sendAlert(alertSubject, alertMessage.toString());
+    }
+
+    /**
+     * Envoie une alerte par mail
+     */
+    private void sendAlert(String alertSubject, String alertMessage) {
+        try {
+            Properties properties = System.getProperties();
+            properties.put("mail.smtp.host", mailServer.getIpAddress());
+            Session session = Session.getDefaultInstance(properties, null);
+            javax.mail.Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(mailServer.getFromAddress()));
+            InternetAddress[] internetAddresses = new InternetAddress[1];
+            internetAddresses[0] = new InternetAddress(mailServer.getToAddress());
+            message.setRecipients(javax.mail.Message.RecipientType.TO, internetAddresses);
+            message.setSubject(alertSubject);
+            message.setText(alertMessage);
+            message.setHeader("X-Mailer", "Java");
+            message.setSentDate(new Date());
+            session.setDebug(debugMode);
+            Transport.send(message);
+        } catch (AddressException exception) {
+            System.out.println("Problème avec une adresse mail " + exception);
+        } catch (MessagingException exception) {
+            System.out.println("Problème avec les mails " + exception);
+        }
 
     }
 
