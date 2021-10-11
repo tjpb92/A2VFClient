@@ -39,7 +39,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.11
+ * @version 1.0.12
  */
 public class A2VFClient {
 
@@ -195,8 +195,7 @@ public class A2VFClient {
         dateFormat.setTimeZone(timeZone);
         Event event;
         int retcode;
-        int nbClient;
-        int evtType;
+        int nbError;
 
         try {
             fa2vfDAO = new Fa2vfDAO(informixConnection);
@@ -234,18 +233,26 @@ public class A2VFClient {
                     System.out.println(exception);
 //                    Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                fa2vf.setA12status(retcode);
-                if (retcode != 1) {
-                    fa2vf.setA12nberr(1);
+//                fa2vf.setA12status(retcode);
+                if (retcode == 1) {
+                    fa2vf.setA12status(retcode);
+                }
+                else {
+                    nbError = fa2vf.getA12nberr() + 1;
+                    fa2vf.setA12nberr(nbError);
+                    if (nbError >= 5 ) {
+                        fa2vf.setA12status(-1);
+                        sendAlert("LOOMA : error with fa2vf.a12num=" + fa2vf.getA12num(), "Record rejected");
+                    }
                 }
 
                 fa2vf.setA12update(new Timestamp(new java.util.Date().getTime()));
                 fa2vfDAO.update(fa2vf);
 //                System.out.println("Rangée(s) affectée(s)=" + fa2vfDAO.getNbAffectedRow());
 
-                if (i >= 1) {
-                    break;
-                }
+//                if (i >= 1) {
+//                    break;
+//                }
 
             }
             fa2vfDAO.closeUpdatePreparedStatement();
@@ -277,7 +284,7 @@ public class A2VFClient {
         } catch (JsonProcessingException | HttpsClientException exception) {
             //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
             System.out.println("  ERROR : fail to sent ticket to Looma " + exception);
-            sendAlert("LOOMA : error with ticket " + ticketInfos.getTicketExternalId(), exception.toString());
+//            sendAlert("LOOMA : error with ticket " + ticketInfos.getTicketExternalId(), exception.toString());
         } catch (IOException exception) {
             System.out.println("  ERROR : Fail to write Json to file " + exception);
             //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
@@ -318,8 +325,7 @@ public class A2VFClient {
                     break;
                 case "-ifxserver":
                     if (ip1 < n) {
-                        if (args[ip1].equals("pre-prod") || args[ip1].equals("prod")
-                                || args[ip1].equals("pre-prod2") || args[ip1].equals("prod2")) {
+                        if (args[ip1].equals("pre-prod") || args[ip1].equals("prod")) {
                             this.ifxDbServerType = args[ip1];
                         } else {
                             throw new GetArgsException("ERREUR : Mauvais serveur Informix : " + args[ip1]);
