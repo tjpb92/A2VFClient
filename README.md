@@ -22,6 +22,7 @@ où :
 - OKIO
 - Kotlin
 - JavaMail API
+- Log4j
 
 ## Fichier des paramètres : 
 
@@ -35,8 +36,10 @@ Le fichier *A2VFClient_Example.prop* est fourni à titre d'exemple.
 
 ## Références:
 
-- [GitHub OKHttp] (https://square.github.io/okhttp/)
-- [GitHub OKIO] (https://github.com/square/okio)
-- [Tuto A Guide to OkHttp] (https://www.baeldung.com/guide-to-okhttp)
-- [Pour valider un Json] (https://jsonformatter.curiousconcept.com/)
-- [JavaMail API] (https://javaee.github.io/javamail)
+- [GitHub OKHttp](https://square.github.io/okhttp/)
+- [GitHub OKIO](https://github.com/square/okio)
+- [Tuto A Guide to OkHttp](https://www.baeldung.com/guide-to-okhttp)
+- [Pour valider un Json](https://jsonformatter.curiousconcept.com/)
+- [JavaMail API](https://javaee.github.io/javamail)
+- [Log4J](http://logging.apache.org/log4j/2.x/download.html)
+- [Tuto Log4J](https://koor.fr/Java/Tutorial/java_logging_log4j2.wp)
