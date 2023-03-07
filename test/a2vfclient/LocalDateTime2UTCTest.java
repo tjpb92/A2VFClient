@@ -1,27 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package a2vfclient;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.TimeZone;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
 
 /**
- *
- * @author thierry.baribaud
+ * Programme de tests pour le projet A2VFClient
+ * 
+ * @author Thierry Baribaud
+ * @version 1.0.15
  */
 public class LocalDateTime2UTCTest {
 
@@ -44,11 +39,9 @@ public class LocalDateTime2UTCTest {
     public void tearDown() {
     }
 
-    // TODO add test methods here.
-    // The methods must be annotated with annotation @Test. For example:
-    //
-    // @Test
-    // public void hello() {}
+    /**
+     * On recherhche la méthode pour convertir le temps local en UTC ...
+     */
     @Test
     public void localDateTime2UTCTest() {
         
@@ -64,5 +57,23 @@ public class LocalDateTime2UTCTest {
         
         ZonedDateTime UTCDateTime = zonedLocaDateTime.withZoneSameInstant(ZoneId.of("UTC"));
         System.out.println("UTCDateTime:"+UTCDateTime+", "+UTC8601DateTimeFormatter.format(UTCDateTime));
+    }
+    
+    /**
+     * Une fois trouvé, on implémente la méthode dans la classe Event
+     * et on teste le résultat.
+     * ATTENTION : il faut modifier expUTCDateTime en fonction de l'heure d'été/hiver
+     */
+    @Test
+    public void localDateTime2UTCDateTimeTest() {
+        String localDateTime = "2023-03-07T12:00:00";
+//        String expUTCDateTime = "2023-03-07T10:00:00Z"; // Heure d'été
+        String expUTCDateTime = "2023-03-07T11:00:00Z"; // Heure d'hiver
+        
+        String UTCDateTime = a2vfclient.Event.localDateTime2UTCDateTime(localDateTime);
+        
+        System.out.println("localDateTime:"+localDateTime);
+        System.out.println("UTCDateTime:"+UTCDateTime);
+        assertEquals(expUTCDateTime, UTCDateTime);
     }
 }

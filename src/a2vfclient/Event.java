@@ -11,12 +11,16 @@ import ticketEvents.TicketOpened;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Classe générique décrivant un événement.
  *
  * @author Thierry Baribaud
- * @version 1.0.5
+ * @version 1.0.15
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
@@ -230,6 +234,24 @@ public abstract class Event {
         return sentDate;
     }
 
+    /**
+     * Convertie une date de l'heure locale en heure UTC
+     * @param localDateTimeAsString date en heure locale,
+     * @return UTCDataTime date en heure UTC.
+     */
+    public static String localDateTime2UTCDateTime(String localDateTimeAsString) {
+        String UTCDateTimeAsString;
+        DateTimeFormatter UTC8601DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        LocalDateTime localDateTime;
+    
+        localDateTime = LocalDateTime.parse(localDateTimeAsString);
+        ZonedDateTime zonedLocaDateTime= localDateTime.atZone(ZoneId.systemDefault());
+        ZonedDateTime UTCDateTime = zonedLocaDateTime.withZoneSameInstant(ZoneId.of("UTC"));
+        
+        UTCDateTimeAsString = UTC8601DateTimeFormatter.format(UTCDateTime);
+        
+        return UTCDateTimeAsString;
+    }
     /**
      * @return Retourne l'objet sous forme textuelle
      */
