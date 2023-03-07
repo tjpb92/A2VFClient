@@ -1,12 +1,13 @@
 package a2vfclient;
 
+import static a2vfclient.Event.localDateTime2UTCDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Classe définissant les informations d'un ticket
  *
  * @author Thierry Baribaud
- * @version 1.0.9
+ * @version 1.0.16
  */
 public class TicketInfos {
 
@@ -400,10 +401,12 @@ public class TicketInfos {
     }
 
     /**
-     * @param ticketCreationDate définit la date de création du ticket
+     * @param ticketCreationDate définit la date de création du ticket (temps LOcal)
+     * ATTENTION no1 : conversion temps local en temps UTC implicit
+     * ATTENTION no2 : mal écrit, à refaire ...
      */
     public void setTicketCreationDate(String ticketCreationDate) {
-        this.ticketCreationDate = ticketCreationDate;
+        this.ticketCreationDate = localDateTime2UTCDateTime(ticketCreationDate);
     }
 
     /**
