@@ -5,7 +5,6 @@ import bdd.Fa2vfDAO;
 import bkgpi2a.EventType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,7 +38,7 @@ import utils.UnknownEventTypeException;
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.12
+ * @version 1.0.18
  */
 public class A2VFClient {
 
@@ -280,7 +279,6 @@ public class A2VFClient {
         ticketInfos.convertLocalTime2UTC(); // Converstion temps local en temps UTC
         
         try {
-            objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
             httpsClient.openTicket(ticketInfos, debugMode);
             sendAlert(ticketOpened);
             retcode = 1;
@@ -498,7 +496,7 @@ public class A2VFClient {
             throw new UnknownEventTypeException("Unknown EventType:" + evtType);
         } else {
             json = new StringBuffer("{");
-            json.append("\"processUid\":\"").append(Md5.encode("a11:" + String.valueOf(fa2vf.getA12num()))).append("\",");
+            json.append("\"processUid\":\"").append(Md5.encode("a12:" + String.valueOf(fa2vf.getA12num()))).append("\",");
             json.append("\"aggregateUid\":\"").append(Md5.encode(fa2vf.getA12laguid())).append("\",");
             json.append("\"eventType\":\"").append(eventType.getName()).append("\",");
             json.append("\"sentDate\":\"").append(dateFormat.format(fa2vf.getA12credate())).append("\",");
