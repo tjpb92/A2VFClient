@@ -276,6 +276,9 @@ public class A2VFClient {
 
         retcode = -1;
         ticketInfos = ticketOpened.getTicketInfos();
+        
+        ticketInfos.convertLocalTime2UTC(); // Converstion temps local en temps UTC
+        
         try {
             objectMapper.writeValue(new File("testOpenTicket_1.json"), ticketInfos);
             httpsClient.openTicket(ticketInfos, debugMode);
@@ -524,6 +527,7 @@ public class A2VFClient {
         String siteId;
         String ticketSubject;
         String ticketRemarks;
+        String ticketCreationDate;
 
         alertSubject = "LOOMA : Ticket " + ticketInfos.getTicketExternalId() + " opened";
 
@@ -536,6 +540,9 @@ public class A2VFClient {
         }
         if ((ticketRemarks = ticketInfos.getTicketRemarks()) != null) {
             alertMessage.append("\nMotif : ").append("\n").append(ticketRemarks);
+        }
+        if ((ticketCreationDate = ticketInfos.getTicketCreationDate()) != null) {
+            alertMessage.append("\nTicket saisi le : ").append("\n").append(ticketCreationDate);
         }
         
         if (alertMessage.length() == 0) {

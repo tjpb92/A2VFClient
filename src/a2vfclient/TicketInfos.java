@@ -1,13 +1,12 @@
 package a2vfclient;
 
-import static a2vfclient.Event.localDateTime2UTCDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Classe définissant les informations d'un ticket
  *
  * @author Thierry Baribaud
- * @version 1.0.16
+ * @version 1.0.17
  */
 public class TicketInfos {
 
@@ -113,6 +112,8 @@ public class TicketInfos {
 
     /**
      * Date de création du ticket
+     * ATTENTION : l'heure peut être locale ou UTC. Pour l'instant rien ne
+     * permet de le distinguer
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String ticketCreationDate;
@@ -395,18 +396,20 @@ public class TicketInfos {
 
     /**
      * @return la date de création du ticket
-     */
+     * ATTENTION : l'heure peut être locale ou UTC. Pour l'instant rien ne
+     * permet de le distinguer
+A     */
     public String getTicketCreationDate() {
         return ticketCreationDate;
     }
 
     /**
-     * @param ticketCreationDate définit la date de création du ticket (temps LOcal)
-     * ATTENTION no1 : conversion temps local en temps UTC implicit
-     * ATTENTION no2 : mal écrit, à refaire ...
+     * @param ticketCreationDate définit la date de création du ticket
+     * ATTENTION : l'heure peut être locale ou UTC. Pour l'instant rien ne
+     * permet de le distinguer
      */
     public void setTicketCreationDate(String ticketCreationDate) {
-        this.ticketCreationDate = localDateTime2UTCDateTime(ticketCreationDate);
+        this.ticketCreationDate = ticketCreationDate;
     }
 
     /**
@@ -435,6 +438,14 @@ public class TicketInfos {
      */
     public void setTicketBusinessStatus(String ticketBusinessStatus) {
         this.ticketBusinessStatus = ticketBusinessStatus;
+    }
+    
+    /**
+     * Convertie les heures du temps local en temps UTC
+     * ATTENTION : on supposer que l'heure est en temps local.
+     */
+    public void convertLocalTime2UTC() {
+        this.ticketCreationDate = Event.localDateTime2UTCDateTime(ticketCreationDate);
     }
 
     /**

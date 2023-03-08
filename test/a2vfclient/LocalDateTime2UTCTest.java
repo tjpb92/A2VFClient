@@ -24,7 +24,7 @@ import utils.Md5;
  * Programme de tests pour le projet A2VFClient
  *
  * @author Thierry Baribaud
- * @version 1.0.16
+ * @version 1.0.17
  */
 public class LocalDateTime2UTCTest {
 
@@ -148,8 +148,10 @@ public class LocalDateTime2UTCTest {
 
             ticketOpened = (TicketOpened) event;
             ticketInfos = ticketOpened.getTicketInfos();
-            System.out.println("ticketInfos:"+ticketInfos);
-            
+            System.out.println("ticketInfos (temps local):"+ticketInfos);
+            ticketInfos.convertLocalTime2UTC(); // Converstion temps local en temps UTC
+            System.out.println("ticketInfos (temps UTC):"+ticketInfos);
+          
             System.out.println("\nticketInfos.ticketCreationDate:"+ticketInfos.getTicketCreationDate());
             System.out.println("ticketOpened.openedDate"+ticketOpened.getOpenedDate());
             
