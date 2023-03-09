@@ -2,7 +2,6 @@ package a2vfclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -15,7 +14,7 @@ import utils.HttpsClientException;
  * Classe décrivant un client se connectant en HTTPS à un serveur
  *
  * @author Thierry Baribaud
- * @version 1.0.10
+ * @version 1.0.19
  */
 public class HttpsClient extends OkHttpClient {
 
@@ -49,24 +48,21 @@ public class HttpsClient extends OkHttpClient {
      *
      * @param ticketInfos commande d'ouverture de ticket
      * @param debugMode indique si l'on est en mode debug ou non
+     * @return response du serveur API
      * @throws com.fasterxml.jackson.core.JsonProcessingException en cas
      * d'erreur de convertion au format Json
-     * @throws HttpsClientException en cas d'erreur avec la connexion
-     * Https
      */
-    public void openTicket(TicketInfos ticketInfos, boolean debugMode) throws JsonProcessingException, IOException, HttpsClientException {
+    public APIResponse openTicket(TicketInfos ticketInfos, boolean debugMode) throws JsonProcessingException, IOException {
         String url;
         String json;
-        int code;
-        String message;
-        StringBuffer mediaTypeParams;
+        Response response;
+        APIResponse apiResponse = new APIResponse();
 
         url = this.apiRest.getBaseUrl() + "/tickets";
         if (debugMode) {
             System.out.println("  url:" + url);
         }
 
-//        objectMapper.writeValue(new File("testOpenTicket_2.json"), ticketInfos);
         json = objectMapper.writeValueAsString(ticketInfos);
         if (debugMode) {
             System.out.println("  openTicket:" + ticketInfos);
@@ -78,7 +74,7 @@ public class HttpsClient extends OkHttpClient {
         if (debugMode) {
             System.out.println("  body.contentType():" + body.contentType() + ", body.contentLength():" + body.contentLength());
         }
-        
+
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("client_id", apiRest.getLogin())
@@ -89,21 +85,19 @@ public class HttpsClient extends OkHttpClient {
         if (debugMode) {
             System.out.println("  request.headers():" + request.headers());
         }
-        
-        Response response = this.newCall(request).execute();
-        code = response.code();
-        message = response.message();
-        json = response.body().string();
+
+        response = this.newCall(request).execute();
+        apiResponse.setCode(response.code());
+        apiResponse.setMessage(response.message());
+        apiResponse.setBody(response.body().string());
 
         if (debugMode) {
-            System.out.println("  response.code():" + code);
-            System.out.println("  response.message():" + message);
-            System.out.println("  response.body():" + json);
+            System.out.println("  response.code():" + apiResponse.getCode());
+            System.out.println("  response.message():" + apiResponse.getMessage());
+            System.out.println("  response.body():" + apiResponse.getBody());
         }
 
-        if (code != 200) {
-            throw new HttpsClientException(code + " " + message);
-        }
+        return apiResponse;
 
     }
 

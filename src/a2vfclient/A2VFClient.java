@@ -33,12 +33,13 @@ import utils.GetArgsException;
 import utils.HttpsClientException;
 import utils.Md5;
 import utils.UnknownEventTypeException;
+import okhttp3.Response;
 
 /**
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.18
+ * @version 1.0.19
  */
 public class A2VFClient {
 
@@ -218,14 +219,15 @@ public class A2VFClient {
                     System.out.println("  " + event.getClass().getName() + ", " + event);
 
                     if (event instanceof TicketOpened) {
-                        retcode = processTicketOpened((TicketOpened) event, httpsClient);
+                        retcode = processTicketOpened((TicketOpened) event, httpsClient, fa2vf.getA12num(), fa2vf.getA12nberr());
                     }
 //                    } else if (event instanceof InterventionStarted) {
 //                        retcode = processInterventionStarted(mongoDatabase, (InterventionStarted) event, httpsClient);
 //                    }
                 } catch (IOException exception) {
                     retcode = -1;
-                    System.out.println("  Cannot convert Json to Event, record rejected " + exception);
+                    System.out.println("  ERROR : Cannot convert Json to Event, record rejected " + exception);
+                    sendAlert("LOOMA : ERROR - Cannot convert Json to Event, record rejected with fa2vf.a12num=" + fa2vf.getA12num(), exception.toString());
 //                        Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, exception);
                 } catch (UnknownEventTypeException exception) {
                     retcode = -1;
@@ -235,13 +237,12 @@ public class A2VFClient {
 //                fa2vf.setA12status(retcode);
                 if (retcode == 1) {
                     fa2vf.setA12status(retcode);
-                }
-                else {
+                } else {
                     nbError = fa2vf.getA12nberr() + 1;
                     fa2vf.setA12nberr(nbError);
-                    if (nbError >= 5 ) {
+                    if (nbError >= 5) {
                         fa2vf.setA12status(-1);
-                        sendAlert("LOOMA : error with fa2vf.a12num=" + fa2vf.getA12num(), "Record rejected");
+                        sendAlert("LOOMA : " + nbError + " errors encountered with fa2vf.a12num=" + fa2vf.getA12num() + ", Record rejected");
                     }
                 }
 
@@ -252,7 +253,6 @@ public class A2VFClient {
 //                if (i >= 1) {
 //                    break;
 //                }
-
             }
             fa2vfDAO.closeUpdatePreparedStatement();
             fa2vfDAO.closeSelectPreparedStatement();
@@ -265,29 +265,38 @@ public class A2VFClient {
     /**
      * Traitement de l'ouverture d'un ticket
      *
-     * @param mongoDatabase connexion à la base de données Mongodb
      * @param ticketOpened événement d'ouverture d'un ticket
+     * @param httpsClient connexion au serveur API
+     *
      * @return résultat de l'opération 1=succès, 0=abandon, -1=erreur
      */
-    private int processTicketOpened(TicketOpened ticketOpened, HttpsClient httpsClient) {
+    private int processTicketOpened(TicketOpened ticketOpened, HttpsClient httpsClient, int a12num, int a12nbError) {
         TicketInfos ticketInfos;
+        APIResponse apiResponse;
         int retcode;
 
         retcode = -1;
         ticketInfos = ticketOpened.getTicketInfos();
-        
+
         ticketInfos.convertLocalTime2UTC(); // Converstion temps local en temps UTC
-        
+
         try {
-            httpsClient.openTicket(ticketInfos, debugMode);
-            sendAlert(ticketOpened);
-            retcode = 1;
-        } catch (JsonProcessingException | HttpsClientException exception) {
+            apiResponse = httpsClient.openTicket(ticketInfos, debugMode);
+            sendAlert(ticketInfos, a12num, a12nbError, apiResponse);
+            if (apiResponse.getCode() == 200) {
+                retcode = 1;
+            }
+        } catch (JsonProcessingException exception) {
             //                      Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
-            System.out.println("  ERROR : fail to sent ticket to Looma " + exception);
-//            sendAlert("LOOMA : error with ticket " + ticketInfos.getTicketExternalId(), exception.toString());
-        } catch (IOException exception) {
             System.out.println("  ERROR : Fail to write Json to file " + exception);
+            sendAlert("LOOMA : " + (a12nbError + 1) + " error(s) encountered, "
+                    + " with ticket " + ticketInfos.getTicketExternalId()
+                    + ", a12num:" + a12num, exception.toString());
+        } catch (IOException exception) {
+            System.out.println("  ERROR : fail to sent ticket to Looma " + exception);
+            sendAlert("LOOMA : " + (a12nbError + 1) + " error(s) encountered, "
+                    + " with ticket " + ticketInfos.getTicketExternalId()
+                    + ", a12num:" + a12num, exception.toString());
             //                        Logger.getLogger(A2ITClient.class.getName()).log(Level.SEVERE, null, exception);
         }
 
@@ -517,17 +526,34 @@ public class A2VFClient {
 
     /**
      * Envoie une alerte par mail pour un ticket ouvert
+     *
+     * @param ticketInfos commande d'ouverture de ticket
+     * @param a12num identifiant unique de l'événement d'ouverture de ticket en
+     * base de données.
+     * @param a12nbError nombre d'erreur(s) actuel
+     * @param response réponse du serveur API
      */
-    private void sendAlert(TicketOpened ticketOpened) {
+    public void sendAlert(TicketInfos ticketInfos, int a12num, int a12nbError, APIResponse response) {
         String alertSubject;
         StringBuffer alertMessage;
-        TicketInfos ticketInfos = ticketOpened.getTicketInfos();
         String siteId;
         String ticketSubject;
         String ticketRemarks;
         String ticketCreationDate;
+        int code;
+        String message;
+        String body;
 
-        alertSubject = "LOOMA : Ticket " + ticketInfos.getTicketExternalId() + " opened";
+        code = response.getCode();
+        switch (code) {
+            case 200:
+                alertSubject = "LOOMA : Ticket " + ticketInfos.getTicketExternalId() + " opened";
+                break;
+            default:
+                alertSubject = "LOOMA : " + (a12nbError + 1) + " error(s) encountered, "
+                        + " with ticket " + ticketInfos.getTicketExternalId()
+                        + ", a12num:" + a12num;
+        }
 
         alertMessage = new StringBuffer(alertSubject);
         if ((ticketSubject = ticketInfos.getTicketSubject()) != null) {
@@ -540,20 +566,29 @@ public class A2VFClient {
             alertMessage.append("\nMotif : ").append("\n").append(ticketRemarks);
         }
         if ((ticketCreationDate = ticketInfos.getTicketCreationDate()) != null) {
-            alertMessage.append("\nTicket saisi le : ").append("\n").append(ticketCreationDate);
+            alertMessage.append("\nTicket saisi le : ").append("\n").append(ticketCreationDate).append(" UTC");
         }
-        
+
         if (alertMessage.length() == 0) {
             alertMessage.append("\nATTENTION : \n\nchamps ticketSubject, siteId, ticketRemarks vides !");
         }
+        message = response.getMessage();
+        body = response.getBody();
+        alertMessage.append("\n\nReponse du serveur API :");
+        alertMessage.append("\n- code : ").append(code);
+        alertMessage.append("\n- message : ").append(message);
+        alertMessage.append("\n- body : ").append(body);
 
         sendAlert(alertSubject, alertMessage.toString());
     }
 
     /**
      * Envoie une alerte par mail
+     *
+     * @param alertSubject nom de l'alerte
+     * @param alertMessage contenu de l'alerte
      */
-    private void sendAlert(String alertSubject, String alertMessage) {
+    public void sendAlert(String alertSubject, String alertMessage) {
         try {
             Properties properties = System.getProperties();
             properties.put("mail.smtp.host", mailServer.getIpAddress());
