@@ -33,13 +33,12 @@ import utils.GetArgsException;
 import utils.HttpsClientException;
 import utils.Md5;
 import utils.UnknownEventTypeException;
-import okhttp3.Response;
 
 /**
  * Connecteur Anstel / Vinci Facilities (lien montant)
  *
  * @author Thierry Baribaud
- * @version 1.0.19
+ * @version 1.0.20
  */
 public class A2VFClient {
 
@@ -540,6 +539,7 @@ public class A2VFClient {
         String ticketSubject;
         String ticketRemarks;
         String ticketCreationDate;
+        String json;
         int code;
         String message;
         String body;
@@ -572,6 +572,17 @@ public class A2VFClient {
         if (alertMessage.length() == 0) {
             alertMessage.append("\nATTENTION : \n\nchamps ticketSubject, siteId, ticketRemarks vides !");
         }
+        
+        alertMessage.append("\n\nDonnees envoyees à Looma :\n");
+        try {
+            json = objectMapper.writeValueAsString(ticketInfos);
+            alertMessage.append(json);
+        } catch (JsonProcessingException ex) {
+            alertMessage.append("ERROR : cannot convert TicketInfos to Json, exeption:").append(ex);
+            alertMessage.append(ticketInfos.toString());
+//            Logger.getLogger(A2VFClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         message = response.getMessage();
         body = response.getBody();
         alertMessage.append("\n\nReponse du serveur API :");
